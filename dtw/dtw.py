@@ -46,7 +46,7 @@ class DTW:
     """The results of an alignment operation.
 
 Objects of class DTW contain alignments computed by the [dtw()]
-function. 
+function.
 
 **Attributes:**
 
@@ -71,7 +71,7 @@ function.
   ``x`` and ``y`` arguments, the query and reference timeseries.
 
 """
-    
+
     def __init__(self, obj):
         self.__dict__.update(obj)  # Convert dict to object
 
@@ -106,17 +106,17 @@ care.
 
 Parameters
 ----------
-x,d : 
+x,d :
     `dtw` object, usually result of call to [dtw()]
-xlab : 
+xlab :
     label for the query axis
-ylab : 
+ylab :
     label for the reference axis
-type : 
+type :
     general style for the plot, see below
-plot_type : 
+plot_type :
     type of line to be drawn, used as the `type` argument in the underlying `plot` call
-... : 
+... :
     additional arguments, passed to plotting functions
 
 """
@@ -195,32 +195,35 @@ step. The output object will then lack the ``index{1,2,1s,2s}`` and
 
 Parameters
 ----------
-x : 
+x :
     query vector *or* local cost matrix
-y : 
+y :
     reference vector, unused if `x` given as cost matrix
-dist_method : 
-    pointwise (local) distance function to use. 
-step_pattern : 
+dist_method : string | callable, default="euclidean"
+    pointwise (local) distance function to use. If a string, it is
+    passed to `scipy.spatial.distance.cdist` as the `metric` argument.
+    If a callable, it must be a pairwise distance function that returns
+    a matrix. Ignored if `x` is a local cost matrix.
+step_pattern :
     a stepPattern object describing the local warping steps
     allowed with their cost (see [stepPattern()])
-window_type : 
+window_type :
     windowing function. Character: "none", "itakura",
     "sakoechiba", "slantedband", or a function (see details).
-open_begin,open_end : 
+open_begin,open_end :
     perform open-ended alignments
-keep_internals : 
+keep_internals :
     preserve the cumulative cost matrix, inputs, and other
     internal structures
-distance_only : 
+distance_only :
     only compute distance (no backtrack, faster)
-window_args : 
+window_args :
     additional arguments, passed to the windowing function
 
 Returns
 -------
 
-An object of class ``DTW``. See docs for the corresponding properties. 
+An object of class ``DTW``. See docs for the corresponding properties.
 
 
 Notes
@@ -304,10 +307,10 @@ Partial alignments are allowed.
 
 
 Subsetting allows warping and unwarping of
-timeseries according to the warping curve. 
+timeseries according to the warping curve.
 See first example below.
 
-Most useful: plot the warped query along with reference 
+Most useful: plot the warped query along with reference
 
 >>> plt.plot(reference);
 ... plt.plot(alignment.index2,query[alignment.index1])	# doctest: +SKIP
@@ -315,7 +318,7 @@ Most useful: plot the warped query along with reference
 Plot the (unwarped) query and the inverse-warped reference
 
 >>> plt.plot(query)					# doctest: +SKIP
-... plt.plot(alignment.index1,reference[alignment.index2]) 
+... plt.plot(alignment.index1,reference[alignment.index2])
 
 
 
@@ -332,7 +335,7 @@ A hand-checkable example
 
 >>> ds = dtw(ldist);			      # DTW with user-supplied local
 
->>> da = dtw(ldist,step_pattern=asymmetric)   # Also compute the asymmetric 
+>>> da = dtw(ldist,step_pattern=asymmetric)   # Also compute the asymmetric
 
 Symmetric: alignment follows the low-distance marked path
 
@@ -340,7 +343,7 @@ Symmetric: alignment follows the low-distance marked path
 
 Asymmetric: visiting 1 is required twice
 
->>> plt.plot(da.index1,da.index2,'ro')	      # doctest: +SKIP	
+>>> plt.plot(da.index1,da.index2,'ro')	      # doctest: +SKIP
 
 >>> ds.distance
 2.0
@@ -361,7 +364,12 @@ Asymmetric: visiting 1 is required twice
             x2 = x2.T
         if y2.shape[0] == 1:
             y2 = y2.T
-        lm = scipy.spatial.distance.cdist(x2, y2, metric=dist_method)
+        if type(dist_method) == str:
+            lm = scipy.spatial.distance.cdist(x2, y2, metric=dist_method)
+        elif callable(dist_method):
+            lm = dist_method(x2, y2)
+        else:
+            _error("Distance method must be a string or a callable function.")
 
     wfun = _canonicalizeWindowFunction(window_type)
 

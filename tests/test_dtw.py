@@ -1,7 +1,9 @@
 
 import unittest
-
+from sklearn.metrics import pairwise_distances
 import numpy as np
+from scipy.spatial.distance import cdist
+from functools import partial
 from numpy import nan
 from numpy.testing import (assert_approx_equal,
                            assert_array_equal, assert_raises)
@@ -40,11 +42,18 @@ warp> par(mfrow=c(2,1));
 """
 
 
-
 class TestDTW(unittest.TestCase):
     def test_sincos(self):
-        idx = np.linspace(0,6.28,num=100)
+        idx = np.linspace(0, 6.28, num=100)
         query = np.sin(idx) + np.random.uniform(size=100)/10.0
         reference = np.cos(idx)
-        alignment = dtw(query,reference)
-        
+        alignment = dtw(query, reference)
+
+    def test_metrics(self):
+        a, b = np.random.random((2, 100))
+        for metric in ['euclidean', 'cosine', 'cityblock']:
+            def spdist(x, y):
+                return cdist(x, y, metric)
+            dtw_res1 = dtw(a, b, keep_internals=True, dist_method=metric)
+            dtw_res2 = dtw(a, b, keep_internals=True, dist_method=spdist)
+            self.assertEquals(dtw_res1.distance, dtw_res2.distance)
